@@ -1,7 +1,13 @@
+## A decentralized node incentivization model for P2P networks
+
+Author: Zsolt Felföldi (zsfelfoldi@ethereum.org)
+
+This document gives a quick overview of a node incentivization model that is currently being implemented in the Go Ethereum light client but is also intended to serve as a PoC for incentivizing future Ethereum network protocols. The goal of this model is to create an honest and efficient market of services, realized without central coordination, with resource allocation and load balancing based purely on p2p policies and market signals.
+
 ## Basic terms and assumptions
 
 - nodes are identified by their cryptographic signer keys and therefore have pseudonym identities (a single physical entity can have multiple identites)
-- channels between two nodes are established by a third node introducing one to the other
+- a communication channel between two nodes is established by a third node introducing one to the other
 - requests are sent through a channel with the expectation of receiving a reply
 	- nodes capable of answering certain types of requests are called servers
 	- nodes interested in sending certain types of requests are called clients
@@ -18,13 +24,13 @@
 
 ### Subjective quality of service
 
-The goal is an honest and efficient market of services, realized without central coordination, with resource allocation and load balancing based purely on p2p policies and market signals. Clients should be able to find the servers that offer the best compromise for them in terms of service quality vs price and establish reliable connections with them (by "quality" we mean consistently correct and quick responses). The most obvious challenge here is that service quality is subjective and cannot be directly proven to a third party so promises are not enforceable. "Caveat emptor" applies maximally, it is always up to the clients to use a strategy that incentivizes honest server behavior and never rewards cheating attempts more than honest operation. Communication between client and server should make it clear what the expected/promised "honest" server behavior is.
+Clients should be able to find the servers that offer the best compromise for them in terms of service quality vs price and establish reliable connections with them (by "quality" we mean consistently correct and quick responses). The most obvious challenge here is that service quality is subjective and cannot be directly proven to a third party so promises are not enforceable. "Caveat emptor" applies maximally, it is always up to the clients to use a strategy that incentivizes honest server behavior and never rewards cheating attempts more than honest operation. Communication between client and server should make it clear what the expected/promised "honest" server behavior is.
 
 ### Building trust
 
-When choosing a server to pay for, the client needs to predict the price-to-value ratio received after the payment. Ideally, this should be based on past quality statistics and the pricing information announced by the server. Server selection based on actual prices ensures efficient resource allocation. This requires a peer-to-peer trust building process though because price information published by the server is just an unenforceable promise. The only reliable information a client has is already received service and already sent payments. A server can always disappear right after receiving the next payment and the client has to consider this possibility. This means that trust building between client and server has to start with the server offering a limited amount of free service. The client strategy should allow an initial "paranoid" approach to new servers which can then gradually be transformed into a more efficient "trusted" mode of operation based on the price feedback received from the server.
+When choosing a server to pay for, the client needs to predict the price-to-value ratio received after the payment. Ideally, this should be based on past quality statistics and the pricing information announced by the server. Server selection based on actual prices ensures efficient resource allocation. This requires a peer-to-peer trust building process though because price information published by the server is just an unenforceable promise. The only reliable information a client has is already received service and already sent payments. A server can always disappear right after receiving the next payment and the client has to consider this possibility. This means that trust building between client and server has to start with the server offering a limited amount of free service. The client strategy should apply an initial "paranoid" approach to new servers which can then gradually be transformed into a more efficient "trusted" mode of operation based on the price feedback received from the server.
 
-### Time scales
+### Load balancing and connection policies
 
 Another important challenge is that on a really short time scale the price information is practically meaningless even in the most honest relationship. Practice has shown that individual request costs and response times are really noisy and need some averaging time to become meaningful. These factors affect the final price-to-value ratio and the client can not assume that longer term statistics collected during lower price levels will apply at higher prices. In general, clients should avoid servers with extremely fluctuating prices.
 
@@ -34,7 +40,7 @@ Note that this capacity-based model does not mean that a client can not just qui
 
 ## Service tokens and request costs
 
-In order to reduce price fluctuations and improve serving capacity allocation servers are allowed to sell a limited amount of their service in advance. Service tokens are issued by individual servers and request costs are nominated in these tokens. Request costs (when nominated in service tokens) should depend only on the actual physical difficulty of serving those requests and be independent from actual market conditions. The token sale price (nominated in real currencies) can of course change according to market supply and demand.
+In order to reduce price fluctuations and improve serving capacity allocation, servers are allowed to sell a limited amount of their service in advance. Service tokens are issued by individual servers and request costs are nominated in these tokens. Request costs (when nominated in service tokens) should depend only on the actual physical difficulty of serving those requests and be independent from actual market conditions. The token sale price (nominated in real currencies) can of course change according to market supply and demand.
 
 ### Token stability
 
@@ -44,17 +50,17 @@ It is the responsibility of clients to determine the extent of token stability u
 
 ### Token spendability
 
-Another important promise is "token spendability" which means that clients can actually buy the usual quality of service with their tokens at the promised stable price levels. Since we dismissed the possibility of controlling demand with prices on a short time scale and decided to use pre-sold tokens of stable value instead, the right way to control short-term demand is by not selling too many tokens in advance. Limiting token issuance in a way that it keeps demand in sync with supply will also ensure that token prices will correctly react to global supply and demand changes on a longer time scale.
+Another important promise is "token spendability" which means that clients can actually buy the usual quality of service with their tokens at the promised stable price levels. Since we dismissed the possibility of controlling demand with prices on a short time scale and decided to use pre-sold tokens of stable value instead, the right way to control short-term demand is by not selling too many tokens in advance. Limiting token issuance in a way that it keeps demand in sync with supply will also ensure that token prices will react to global supply and demand changes on a longer time scale.
 
-Token stability means that there is a more or less constant maximum limit on the rate at which all clients combined can spend tokens. Charging for capacity also sets a minimum limit on total token spending rate if the total capacity limit is reached. Token spendability promises that in at least a given percentage of time the capacity limit of the server will not be filled up with token-spending clients so anyone in possession of tokens can connect and spend them with a high enough probability.
+Token stability means that there is a more or less constant maximum limit on the rate at which all clients combined can spend tokens. Charging for capacity also sets a minimum limit on total token spending rate if the total capacity limit is reached by paying clients. Token spendability promises that in at least a given percentage of time the capacity limit of the server will not be filled up with token-spending clients so anyone in possession of tokens can connect and spend them with a high enough probability.
 
-Limiting total outstanding token amount also requires limiting token lifetime, otherwise token hoarding would make new token issuance impossible. Buying tokens in advance has a potential cost to clients, but it also has its benefits. One of these is that if they know their needs in the near future then they can buy the dips and don't need to compete for staying connected when a lot of new clients are trying to connect.
+Limiting total outstanding token amount also requires limiting token lifetime, otherwise token hoarding could make new token issuance impossible. Buying tokens in advance has a potential cost to clients, but it also has its benefits. One of these is that if they know their needs in the near future then they can buy the dips and don't need to compete for tokens in those periods when many new clients are trying to connect and the available supply is low.
 
 ### Client priorities and free service
 
 The control target for token issuance rate is that the total capacity limit is usually not 100% filled with paying clients. Still, there are cases when too many of them want to connect simultaneously and the server has to prioritize. The preference of long-term business relationships over short-term competition should also be realized in the client connection priorities so the priority is based on the token balance of the clients. More exactly, the suggested priority formula is `tokenBalance / requestedCapacity` which means that those clients who want to spend their tokens at the maximum possible rate can do so at a rate proportional to their balance. Putting it another way, every single token that its owner wants to spend at any given moment has a similar chance of being spent.
 
-This also means that the main benefit of buying tokens in advance is that it ensures a stable connection. Buying tokens with a limited lifetime is a commitment to use the service in the near future which is a valuable information for the server and it is rewarded with a commitment to let the client do so. The benefits of this mechanism are symmetrical in the sense that they make the future more plannable for both parties.
+This also means that the main benefit of buying tokens in advance is that it ensures a stable connection. Buying tokens with a limited lifetime is a commitment to use the service in the near future which is a valuable information for the server and it is rewarded with a commitment to let the client do so. The benefits of this mechanism are symmetrical in the sense that they make the future more predictable for both parties.
 
 Client priority based on token balance also means that it is easy to seamlessly integrate free service into the model. The same condition that ensures token spendability (server capacity limits not always filled by paying clients) also makes it possible to accept clients with zero balance. In order to distribute the available free service capacity to non-paying clients more evenly, Geth LES implementation maintains a virtual negative balance for them which is also expired over time and is associated with network address instead of key ID.
 
