@@ -1,9 +1,9 @@
-## Some pointers to help understanding the LES incentivization model
+### Some pointers to help understanding the LES incentivization model
 
-### My Devcon5 talk slides:
+- [A quick overview of the model](https://github.com/zsfelfoldi/incentives/blob/master/overview.md)
+- [My Devcon5 talk slides](https://github.com/zsfelfoldi/incentives/blob/master/fzs_slides.pdf) (hopefully the entire recording will be released soon)
 
-https://github.com/zsfelfoldi/incentives/blob/master/fzs_slides.pdf
-(hopefully the entire recording will be released soon)
+More detailed documents are coming soon...
 
 ### Already implemented components
 
